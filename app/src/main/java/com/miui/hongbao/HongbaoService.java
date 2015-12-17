@@ -2,15 +2,16 @@ package com.miui.hongbao;
 
 import android.accessibilityservice.AccessibilityService;
 import android.annotation.TargetApi;
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.os.Build;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 
 public class HongbaoService extends AccessibilityService {
@@ -56,8 +57,17 @@ public class HongbaoService extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent event) {
 
         if (event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
-            Log.d(TAG, event.toString());
-
+            Log.d(TAG, event.getText().toString());
+            Parcelable parcelable = event.getParcelableData();
+            if (parcelable instanceof Notification) {
+                Notification notification = (Notification) parcelable;
+                Log.d(TAG, "Notification: " + notification.contentIntent.toString());
+                try {
+                    ((Notification) parcelable).contentIntent.send();
+                } catch (PendingIntent.CanceledException e) {
+                    Log.e(TAG, "", e);
+                }
+            }
             return;
         }
 
