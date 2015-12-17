@@ -14,7 +14,16 @@ import java.util.regex.Pattern;
 
 
 public class HongbaoService extends AccessibilityService {
-    private List<AccessibilityNodeInfo> mReceiveNode, mUnpackNode;
+
+    private final static String TAG = "GOTCHA";
+    /**
+     * 解析的红包列表
+     */
+    private List<AccessibilityNodeInfo> mReceiveNode;
+    /**
+     * 未打开的红包列表
+     */
+    private List<AccessibilityNodeInfo> mUnpackNode;
 
     private boolean mLuckyMoneyPicked, mLuckyMoneyReceived, mNeedUnpack, mNeedBack;
 
@@ -23,18 +32,18 @@ public class HongbaoService extends AccessibilityService {
 
     private AccessibilityNodeInfo rootNodeInfo;
 
-    private String WECHAT_DETAILS_EN = "Details";
-    private String WECHAT_DETAILS_CH = "红包详情";
-    private String WECHAT_BETTER_LUCK_EN = "Better luck next time!";
-    private String WECHAT_BETTER_LUCK_CH = "手慢了";
-    private String WECHAT_OPEN_EN = "Open";
-    private String WECHAT_OPENED_EN = "opened";
-    private String WECHAT_OPEN_CH = "拆红包";
-    private String WECHAT_VIEW_SELF_CH = "查看红包";
-    private String WECHAT_VIEW_OTHERS_CH = "领取红包";
-    private String WECHAT_DEFAULT_TEXT_EN = "Best wishes!";
-    private String WECHAT_DEFAULT_TEXT_CH = "恭喜发财,大吉大利!";
-    private int MAX_DURATION_TOLERANCE = 5000;
+    private final static String WECHAT_DETAILS_EN = "Details";
+    private final static String WECHAT_DETAILS_CH = "红包详情";
+    private final static String WECHAT_BETTER_LUCK_EN = "Better luck next time!";
+    private final static String WECHAT_BETTER_LUCK_CH = "手慢了";
+    private final static String WECHAT_OPEN_EN = "Open";
+    private final static String WECHAT_OPENED_EN = "opened";
+    private final static String WECHAT_OPEN_CH = "拆红包";
+    private final static String WECHAT_VIEW_SELF_CH = "查看红包";
+    private final static String WECHAT_VIEW_OTHERS_CH = "领取红包";
+    private final static String WECHAT_DEFAULT_TEXT_EN = "Best wishes!";
+    private final static String WECHAT_DEFAULT_TEXT_CH = "恭喜发财,大吉大利!";
+    private final static int MAX_DURATION_TOLERANCE = 5000;
 
 
     /**
@@ -45,7 +54,15 @@ public class HongbaoService extends AccessibilityService {
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-        this.rootNodeInfo = event.getSource();
+
+        if (event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
+            Log.d(TAG, event.toString());
+
+            return;
+        }
+
+
+        rootNodeInfo = event.getSource();
 
         if (rootNodeInfo == null) return;
 
@@ -62,10 +79,9 @@ public class HongbaoService extends AccessibilityService {
 
                 long now = System.currentTimeMillis();
 
-                Log.d("111","0");
-                if (this.shouldReturn(id, now - lastFetchedTime))
+                if (shouldReturn(id, now - lastFetchedTime)) {
                     return;
-                Log.d("111","1");
+                }
 
                 lastFetchedHongbaoId = id;
                 lastFetchedTime = now;
@@ -106,11 +122,11 @@ public class HongbaoService extends AccessibilityService {
         if (this.rootNodeInfo == null) return;
 
         /* 聊天会话窗口，遍历节点匹配“领取红包”和"查看红包" */
-        List<AccessibilityNodeInfo> nodes1 = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
+        List<AccessibilityNodeInfo> nodes1 = findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
                 this.WECHAT_VIEW_SELF_CH, this.WECHAT_VIEW_OTHERS_CH});
 
         if (!nodes1.isEmpty()) {
-            String nodeId = Integer.toHexString(System.identityHashCode(this.rootNodeInfo));
+            String nodeId = Integer.toHexString(System.identityHashCode(rootNodeInfo));
             if (!nodeId.equals(lastFetchedHongbaoId)) {
                 mLuckyMoneyReceived = true;
                 mReceiveNode = nodes1;
