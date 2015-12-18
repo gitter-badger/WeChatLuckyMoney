@@ -9,7 +9,6 @@ import android.os.Parcelable;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,8 +49,6 @@ public class HongbaoService extends AccessibilityService {
      */
     private final static String VERIFY_TEXT = "微信红包";
 
-    private final static int MAX_DURATION_TOLERANCE = 5000;
-
 
     /**
      * AccessibilityEvent的回调方法
@@ -88,6 +85,12 @@ public class HongbaoService extends AccessibilityService {
 
         checkNodeInfo();
 
+
+        if (mNeedBack) {
+            performGlobalAction(GLOBAL_ACTION_BACK);
+            mNeedBack = false;
+        }
+
         /* 如果已经接收到红包并且还没有戳开 */
         if (mLuckyMoneyReceived && !mLuckyMoneyPicked && (mReceiveNodes.size() > 0)) {
             int size = mReceiveNodes.size();
@@ -99,7 +102,9 @@ public class HongbaoService extends AccessibilityService {
                     return;
                 }
 
-                cellNode.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                if (cellNode != null && cellNode.getParent() != null) {
+                    cellNode.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                }
 
                 mReceiveNodes.remove(cellNode);
                 mUnpackNode.add(cellNode);
@@ -119,11 +124,6 @@ public class HongbaoService extends AccessibilityService {
             }
         }
 
-
-        if (mNeedBack) {
-            performGlobalAction(GLOBAL_ACTION_BACK);
-            mNeedBack = false;
-        }
     }
 
     @Override
@@ -158,7 +158,7 @@ public class HongbaoService extends AccessibilityService {
                     continue;
                 }
 
-                if(mReceiveNodes.contains(info)){
+                if (mReceiveNodes.contains(info)) {
                     Log.d(TAG, "Already Added, bypass");
                     continue;
                 }
@@ -185,9 +185,12 @@ public class HongbaoService extends AccessibilityService {
             List<AccessibilityNodeInfo> nodes3 = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
                     this.WECHAT_BETTER_LUCK_CH, this.WECHAT_DETAILS_CH,
                     this.WECHAT_BETTER_LUCK_EN, this.WECHAT_DETAILS_EN});
-            if (nodes3 != null) {
+            if (!nodes3.isEmpty()) {
                 mNeedBack = true;
                 mLuckyMoneyPicked = false;
+                AccessibilityNodeInfo node = mUnpackNode.get(mUnpackNode.size() - 1); //这种情况应该只有一个匹配
+                mUnpackNode.remove(node);
+                finishedNode.add(node);
             }
         }
     }
@@ -221,10 +224,15 @@ public class HongbaoService extends AccessibilityService {
      */
     private boolean isHongbaoObj(AccessibilityNodeInfo node) {
         AccessibilityNodeInfo parent = node.getParent();
+        boolean result = false;
+        try {
+            result = parent.getChildCount() == 3 &&
+                    parent.getChild(2).getClassName().toString().contains("TextView") &&
+                    parent.getChild(2).getText().toString().equals(VERIFY_TEXT);
+        } catch (NullPointerException e) {
+            Log.e(TAG, "", e);
+        }
 
-        boolean result = parent.getChildCount() == 3 &&
-                parent.getChild(2).getClassName().toString().contains("TextView") &&
-                parent.getChild(2).getText().toString().equals(VERIFY_TEXT);
         return result;
     }
 
