@@ -25,6 +25,10 @@ public class HongbaoService extends AccessibilityService {
      * 未打开的红包列表
      */
     private List<AccessibilityNodeInfo> mUnpackNode;
+    /**
+     * 已抢过的红包
+     */
+    private List<String> finishedNode = new ArrayList<>();
 
     private boolean mLuckyMoneyPicked, mLuckyMoneyReceived, mNeedUnpack, mNeedBack;
 
@@ -42,8 +46,8 @@ public class HongbaoService extends AccessibilityService {
     private final static String WECHAT_OPEN_CH = "拆红包";
     private final static String WECHAT_VIEW_SELF_CH = "查看红包";
     private final static String WECHAT_VIEW_OTHERS_CH = "领取红包";
-    private final static String WECHAT_DEFAULT_TEXT_EN = "Best wishes!";
-    private final static String WECHAT_DEFAULT_TEXT_CH = "恭喜发财,大吉大利!";
+    private final static String NOTIFICATION_TIP = "[微信红包]";
+
     private final static int MAX_DURATION_TOLERANCE = 5000;
 
 
@@ -58,6 +62,10 @@ public class HongbaoService extends AccessibilityService {
 
         if (event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
             Log.d(TAG, event.getText().toString());
+            String tip = event.getText().toString();
+            if (!tip.contains(NOTIFICATION_TIP)) {
+                return;
+            }
             Parcelable parcelable = event.getParcelableData();
             if (parcelable instanceof Notification) {
                 Notification notification = (Notification) parcelable;
@@ -96,6 +104,8 @@ public class HongbaoService extends AccessibilityService {
                 lastFetchedHongbaoId = id;
                 lastFetchedTime = now;
 
+                finishedNode.add(id);
+
                 AccessibilityNodeInfo cellNode = mReceiveNode.get(size - 1);
                 cellNode.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
                 mLuckyMoneyReceived = false;
@@ -132,23 +142,23 @@ public class HongbaoService extends AccessibilityService {
         if (this.rootNodeInfo == null) return;
 
         /* 聊天会话窗口，遍历节点匹配“领取红包”和"查看红包" */
-        List<AccessibilityNodeInfo> nodes1 = findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
+        List<AccessibilityNodeInfo> nodesWaiting = findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
                 this.WECHAT_VIEW_SELF_CH, this.WECHAT_VIEW_OTHERS_CH});
 
-        if (!nodes1.isEmpty()) {
+        if (!nodesWaiting.isEmpty()) {
             String nodeId = Integer.toHexString(System.identityHashCode(rootNodeInfo));
             if (!nodeId.equals(lastFetchedHongbaoId)) {
                 mLuckyMoneyReceived = true;
-                mReceiveNode = nodes1;
+                mReceiveNode = nodesWaiting;
             }
             return;
         }
 
         /* 戳开红包，红包还没抢完，遍历节点匹配“拆红包” */
-        List<AccessibilityNodeInfo> nodes2 = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
+        List<AccessibilityNodeInfo> nodesStep2 = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
                 this.WECHAT_OPEN_CH, this.WECHAT_OPEN_EN});
-        if (!nodes2.isEmpty()) {
-            mUnpackNode = nodes2;
+        if (!nodesStep2.isEmpty()) {
+            mUnpackNode = nodesStep2;
             mNeedUnpack = true;
             return;
         }
@@ -217,8 +227,11 @@ public class HongbaoService extends AccessibilityService {
      * @return 是否应该返回
      */
     private boolean shouldReturn(String id, long duration) {
+
         return id == null
-                || (duration < this.MAX_DURATION_TOLERANCE) && id.equals(lastFetchedHongbaoId)
-                && (lastFetchedHongbaoId.equals(this.WECHAT_DEFAULT_TEXT_CH) || lastFetchedHongbaoId.equals(this.WECHAT_DEFAULT_TEXT_EN));
+                || ((duration < this.MAX_DURATION_TOLERANCE) && id.equals(lastFetchedHongbaoId))
+                || finishedNode.contains(id);
+
+
     }
 }
