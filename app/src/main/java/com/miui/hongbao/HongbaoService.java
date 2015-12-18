@@ -145,7 +145,7 @@ public class HongbaoService extends AccessibilityService {
         List<AccessibilityNodeInfo> nodesWaiting = findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
                 this.WECHAT_VIEW_SELF_CH, this.WECHAT_VIEW_OTHERS_CH});
 
-        if (!nodesWaiting.isEmpty()) {
+        if (nodesWaiting != null) {
             String nodeId = Integer.toHexString(System.identityHashCode(rootNodeInfo));
             if (!nodeId.equals(lastFetchedHongbaoId)) {
                 mLuckyMoneyReceived = true;
@@ -157,7 +157,7 @@ public class HongbaoService extends AccessibilityService {
         /* 戳开红包，红包还没抢完，遍历节点匹配“拆红包” */
         List<AccessibilityNodeInfo> nodesStep2 = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
                 this.WECHAT_OPEN_CH, this.WECHAT_OPEN_EN});
-        if (!nodesStep2.isEmpty()) {
+        if (nodesStep2 != null) {
             mUnpackNode = nodesStep2;
             mNeedUnpack = true;
             return;
@@ -168,7 +168,7 @@ public class HongbaoService extends AccessibilityService {
             List<AccessibilityNodeInfo> nodes3 = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
                     this.WECHAT_BETTER_LUCK_CH, this.WECHAT_DETAILS_CH,
                     this.WECHAT_BETTER_LUCK_EN, this.WECHAT_DETAILS_EN});
-            if (!nodes3.isEmpty()) {
+            if (nodes3 != null) {
                 mNeedBack = true;
                 mLuckyMoneyPicked = false;
             }
@@ -214,7 +214,7 @@ public class HongbaoService extends AccessibilityService {
                 return nodes;
             }
         }
-        return new ArrayList<>();
+        return null;
     }
 
     /**
