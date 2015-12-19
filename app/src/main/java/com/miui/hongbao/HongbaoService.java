@@ -44,6 +44,8 @@ public class HongbaoService extends AccessibilityService {
     private final static String WECHAT_VIEW_SELF_CH = "查看红包";
     private final static String WECHAT_VIEW_OTHERS_CH = "领取红包";
     private final static String NOTIFICATION_TIP = "[微信红包]";
+    private final static String NOTIFICATION_QQ = "[QQ红包]";
+
     /**
      * 用来鉴别对象是否为微信红包的字符串
      */
@@ -62,7 +64,7 @@ public class HongbaoService extends AccessibilityService {
         if (event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
             Log.d(TAG, event.getText().toString());
             String tip = event.getText().toString();
-            if (!tip.contains(NOTIFICATION_TIP)) {
+            if (!tip.contains(NOTIFICATION_TIP) && !tip.contains(NOTIFICATION_QQ)) {
                 return;
             }
             Parcelable parcelable = event.getParcelableData();
@@ -253,6 +255,7 @@ public class HongbaoService extends AccessibilityService {
             List<AccessibilityNodeInfo> nodes = nodeInfo.findAccessibilityNodeInfosByText(text);
 
             if (!nodes.isEmpty()) {
+                Log.d(TAG, "Current Node with " + text + " is " + nodeInfo.getClassName());
                 result.addAll(nodes);
             }
         }
