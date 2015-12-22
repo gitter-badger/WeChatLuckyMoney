@@ -12,6 +12,8 @@ import android.view.accessibility.AccessibilityNodeInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class HongbaoService extends AccessibilityService {
@@ -157,7 +159,6 @@ public class HongbaoService extends AccessibilityService {
     /**
      * 将节点对象的id和红包上的内容合并
      * 用于表示一个唯一的红包
-     * TODO: 没有时间戳的红包仅能根据文字辨识
      *
      * @param node 红包文字对象
      * @return 红包标识字符串(红包文本+Hash+接收时间)
@@ -169,16 +170,26 @@ public class HongbaoService extends AccessibilityService {
         }
 
         /* 获取红包上的文本 */
-        String content = "";
+        String result = "";
         try {
-            content += node.getParent().getChild(0).getText().toString(); //文本
-            content += node.hashCode(); //文本框hash
-            content += node.getParent().getParent().getChild(0).getText().toString();
+            // 用正则表达式匹配节点Object
+            Pattern objHashPattern = Pattern.compile("(?<=@)[0-9|a-z]+(?=;)");
+            Matcher objHashMatcher = objHashPattern.matcher(node.toString());
+
+            // AccessibilityNodeInfo必然有且只有一次匹配，因此不再作判断
+            objHashMatcher.find();
+            result += objHashMatcher.group(0);
+
+            result += node.getParent().getChild(0).getText().toString(); //文本
+
+            result += node.getParent().getParent().getChild(0).getText().toString(); //或许有时间
         } catch (NullPointerException npe) {
             Log.w(TAG, "Target Without time");
         }
 
-        return content;
+        Log.v(TAG, result);
+
+        return result;
     }
 
     /**
