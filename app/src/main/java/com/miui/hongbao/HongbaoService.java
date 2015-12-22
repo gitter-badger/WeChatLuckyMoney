@@ -29,8 +29,20 @@ public class HongbaoService extends AccessibilityService {
      * 已抢过的红包
      */
     private List<String> finishedNode = new ArrayList<>();
+    /**
+     * 红包是否已经戳开
+     */
+    private boolean mLuckyMoneyPicked;
+    /**
+     * 解析结果中有红包节点
+     */
+    private boolean mLuckyMoneyReceived;
 
-    private boolean mLuckyMoneyPicked, mLuckyMoneyReceived, mNeedUnpack, mNeedBack;
+    private boolean mNeedUnpack;
+    /**
+     * 是否处于打开红包阶段，因此需要进行返回操作
+     */
+    private boolean mNeedBack;
 
     private AccessibilityNodeInfo rootNodeInfo;
     /**
@@ -114,15 +126,14 @@ public class HongbaoService extends AccessibilityService {
                 mLuckyMoneyPicked = true;
             }
         }
+
         /* 如果戳开但还未领取 */
-        if (mNeedUnpack && (mUnpackNode != null)) {
-            int size = mUnpackNode.size();
-            if (size > 0) {
-                AccessibilityNodeInfo cellNode = mUnpackNode.get(size - 1);
-                cellNode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                finishedNode.add(currentNodeInfo);
-                mNeedUnpack = false;
-            }
+        if (mNeedUnpack && !mUnpackNode.isEmpty()) {
+            AccessibilityNodeInfo cellNode = mUnpackNode.get(0);
+            cellNode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+            mUnpackNode.remove(0);
+            finishedNode.add(currentNodeInfo);
+            mNeedUnpack = false;
         }
 
     }
@@ -162,6 +173,7 @@ public class HongbaoService extends AccessibilityService {
                 if (mReceiveNodes.contains(info)) {
                     Log.d(TAG, "Already Added, bypass");
                     mLuckyMoneyReceived = true;
+                    mLuckyMoneyPicked = false;
                     continue;
                 }
 
@@ -199,12 +211,13 @@ public class HongbaoService extends AccessibilityService {
      * 将节点对象的id和红包上的内容合并
      * 用于表示一个唯一的红包
      * TODO: 没有时间戳的红包仅能根据文字辨识
+     *
      * @param node 红包文字对象
      * @return 红包标识字符串(Hash值+红包文本)
      */
     private String getHongbaoText(AccessibilityNodeInfo node) {
 
-        if(!isHongbaoObj(node)){
+        if (!isHongbaoObj(node)) {
             return null;
         }
 
