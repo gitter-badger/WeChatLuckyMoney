@@ -28,11 +28,15 @@ public class HongbaoService extends AccessibilityService {
     /**
      * 已抢过的红包
      */
-    private List<AccessibilityNodeInfo> finishedNode = new ArrayList<>();
+    private List<String> finishedNode = new ArrayList<>();
 
     private boolean mLuckyMoneyPicked, mLuckyMoneyReceived, mNeedUnpack, mNeedBack;
 
     private AccessibilityNodeInfo rootNodeInfo;
+    /**
+     * 当前处理的红包节点标志字符串
+     */
+    private String currentNodeInfo;
 
     private final static String WECHAT_DETAILS_EN = "Details";
     private final static String WECHAT_DETAILS_CH = "红包详情";
@@ -80,7 +84,6 @@ public class HongbaoService extends AccessibilityService {
             return;
         }
 
-
         rootNodeInfo = event.getSource();
 
         if (rootNodeInfo == null) return;
@@ -90,6 +93,7 @@ public class HongbaoService extends AccessibilityService {
 
         if (mNeedBack) {
             performGlobalAction(GLOBAL_ACTION_BACK);
+            mLuckyMoneyPicked = false;
             mNeedBack = false;
         }
 
@@ -99,17 +103,12 @@ public class HongbaoService extends AccessibilityService {
             if (size > 0) {
                 AccessibilityNodeInfo cellNode = mReceiveNodes.get(size - 1);
 
-
-                if (finishedNode.contains(cellNode)) {
-                    return;
-                }
-
                 if (cellNode != null && cellNode.getParent() != null) {
                     cellNode.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                    currentNodeInfo = getHongbaoText(cellNode);
                 }
 
                 mReceiveNodes.remove(cellNode);
-                mUnpackNode.add(cellNode);
 
                 mLuckyMoneyReceived = false;
                 mLuckyMoneyPicked = true;
@@ -121,7 +120,7 @@ public class HongbaoService extends AccessibilityService {
             if (size > 0) {
                 AccessibilityNodeInfo cellNode = mUnpackNode.get(size - 1);
                 cellNode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                finishedNode.add(cellNode);
+                finishedNode.add(currentNodeInfo);
                 mNeedUnpack = false;
             }
         }
@@ -155,13 +154,14 @@ public class HongbaoService extends AccessibilityService {
                     continue;
                 }
 
-                if (finishedNode.contains(info)) {
+                if (finishedNode.contains(getHongbaoText(info))) {
                     Log.d(TAG, "Already opened, bypass");
                     continue;
                 }
 
                 if (mReceiveNodes.contains(info)) {
                     Log.d(TAG, "Already Added, bypass");
+                    mLuckyMoneyReceived = true;
                     continue;
                 }
 
@@ -190,9 +190,7 @@ public class HongbaoService extends AccessibilityService {
             if (!nodes3.isEmpty()) {
                 mNeedBack = true;
                 mLuckyMoneyPicked = false;
-                AccessibilityNodeInfo node = mUnpackNode.get(mUnpackNode.size() - 1); //这种情况应该只有一个匹配
-                mUnpackNode.remove(node);
-                finishedNode.add(node);
+                finishedNode.add(currentNodeInfo);
             }
         }
     }
@@ -200,19 +198,23 @@ public class HongbaoService extends AccessibilityService {
     /**
      * 将节点对象的id和红包上的内容合并
      * 用于表示一个唯一的红包
-     *
-     * @param node 任意对象
+     * TODO: 没有时间戳的红包仅能根据文字辨识
+     * @param node 红包文字对象
      * @return 红包标识字符串(Hash值+红包文本)
      */
     private String getHongbaoText(AccessibilityNodeInfo node) {
+
+        if(!isHongbaoObj(node)){
+            return null;
+        }
+
         /* 获取红包上的文本 */
         String content = "";
         try {
-            String time = node.getParent().getParent().getParent().getChild(0).getChild(0).getText().toString();
-            AccessibilityNodeInfo i = node.getParent().getChild(0);
-            content += i.getText().toString();
+            content += node.getParent().getChild(0).getText().toString();
+            content += node.getParent().getParent().getChild(0).getText().toString();
         } catch (NullPointerException npe) {
-            return null;
+            Log.e(TAG, "Error occured in parse", npe);
         }
 
         return content;
@@ -255,7 +257,7 @@ public class HongbaoService extends AccessibilityService {
             List<AccessibilityNodeInfo> nodes = nodeInfo.findAccessibilityNodeInfosByText(text);
 
             if (!nodes.isEmpty()) {
-                Log.d(TAG, "Current Node with " + text + " is " + nodeInfo.getClassName());
+                Log.v(TAG, "Current Node with " + text + " is " + nodeInfo.getClassName());
                 result.addAll(nodes);
             }
         }
