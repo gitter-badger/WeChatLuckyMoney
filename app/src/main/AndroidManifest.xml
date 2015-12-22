@@ -3,6 +3,8 @@
     package="com.miui.hongbao" >
     <uses-sdk android:minSdkVersion="18"
               android:targetSdkVersion="22"/>
+    <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"

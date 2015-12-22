@@ -2,10 +2,13 @@ package com.miui.hongbao;
 
 import android.accessibilityservice.AccessibilityService;
 import android.annotation.TargetApi;
+import android.app.KeyguardManager;
 import android.app.Notification;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.os.Build;
 import android.os.Parcelable;
+import android.os.PowerManager;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -43,15 +46,58 @@ public class HongbaoService extends AccessibilityService {
     public final static String NOTIFICATION_TIP = "[微信红包]";
     public final static String NOTIFICATION_QQ = "[QQ红包]";
 
+
     /**
      * 用来鉴别对象是否为微信红包的字符串
      */
     private final static String VERIFY_TEXT = "微信红包";
 
+
+    private PowerManager pm;
+
+    private PowerManager.WakeLock lock;
+
+    private KeyguardManager kManager;
+
+    private KeyguardManager.KeyguardLock kLock;
+
     private HongbaoState hongbao;
 
     public void setHongbao(HongbaoState hongbao) {
         this.hongbao = hongbao;
+    }
+
+    /**
+     * 初始化环境
+     */
+    private void prepare() {
+        if (pm == null) {
+            pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        }
+
+        if (kManager == null) {
+            kManager = ((KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE));
+        }
+        lock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+        lock.acquire();
+
+        kLock = kManager.newKeyguardLock(TAG);
+        kLock.disableKeyguard();
+    }
+
+    /**
+     * 清理环境
+     */
+    private void clean() {
+        if (lock != null) {
+            lock.release();
+            lock = null;
+        }
+
+        if (kLock != null) {
+            kLock.reenableKeyguard();
+            kLock = null;
+        }
     }
 
 
@@ -62,6 +108,8 @@ public class HongbaoService extends AccessibilityService {
      */
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+
+        prepare();
 
         if (event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
             Log.d(TAG, event.getText().toString());
@@ -82,6 +130,7 @@ public class HongbaoService extends AccessibilityService {
             return;
         }
 
+
         rootNodeInfo = event.getSource();
 
         if (rootNodeInfo == null) return;
@@ -92,7 +141,9 @@ public class HongbaoService extends AccessibilityService {
             return;
         }
 
+
         this.hongbao.performAction();
+        clean();
     }
 
     @Override
@@ -125,7 +176,7 @@ public class HongbaoService extends AccessibilityService {
                 }
 
                 if (finishedNode.contains(getSignature(node))) {
-                    Log.d(TAG, "Already opened, bypass");
+                    Log.v(TAG, "Already opened, bypass");
                     continue;
                 }
                 currentNodeInfo = getSignature(node);
