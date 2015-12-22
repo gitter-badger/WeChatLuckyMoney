@@ -117,7 +117,7 @@ public class HongbaoService extends AccessibilityService {
 
                 if (cellNode != null && cellNode.getParent() != null) {
                     cellNode.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                    currentNodeInfo = getHongbaoText(cellNode);
+                    currentNodeInfo = getSignature(cellNode);
                 }
 
                 mReceiveNodes.remove(cellNode);
@@ -165,7 +165,7 @@ public class HongbaoService extends AccessibilityService {
                     continue;
                 }
 
-                if (finishedNode.contains(getHongbaoText(info))) {
+                if (finishedNode.contains(getSignature(info))) {
                     Log.d(TAG, "Already opened, bypass");
                     continue;
                 }
@@ -213,9 +213,9 @@ public class HongbaoService extends AccessibilityService {
      * TODO: 没有时间戳的红包仅能根据文字辨识
      *
      * @param node 红包文字对象
-     * @return 红包标识字符串(Hash值+红包文本)
+     * @return 红包标识字符串(红包文本+Hash+接收时间)
      */
-    private String getHongbaoText(AccessibilityNodeInfo node) {
+    private String getSignature(AccessibilityNodeInfo node) {
 
         if (!isHongbaoObj(node)) {
             return null;
@@ -224,10 +224,11 @@ public class HongbaoService extends AccessibilityService {
         /* 获取红包上的文本 */
         String content = "";
         try {
-            content += node.getParent().getChild(0).getText().toString();
+            content += node.getParent().getChild(0).getText().toString(); //文本
+            content += node.hashCode(); //文本框hash
             content += node.getParent().getParent().getChild(0).getText().toString();
         } catch (NullPointerException npe) {
-            Log.e(TAG, "Error occured in parse", npe);
+            Log.w(TAG, "Target Without time");
         }
 
         return content;
