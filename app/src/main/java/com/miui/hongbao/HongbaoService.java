@@ -67,6 +67,13 @@ public class HongbaoService extends AccessibilityService {
      */
     private final static String VERIFY_TEXT = "微信红包";
 
+    private HongbaoState hongbao;
+
+    public void setHongbao(HongbaoState hongbao){
+        this.hongbao = hongbao;
+    }
+
+
 
     /**
      * AccessibilityEvent的回调方法
