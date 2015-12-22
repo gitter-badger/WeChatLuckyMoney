@@ -109,7 +109,6 @@ public class HongbaoService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
 
-        prepare();
 
         if (event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
             Log.d(TAG, event.getText().toString());
@@ -122,6 +121,7 @@ public class HongbaoService extends AccessibilityService {
                 Notification notification = (Notification) parcelable;
                 Log.d(TAG, "Notification: " + notification.contentIntent.toString());
                 try {
+                    prepare();
                     ((Notification) parcelable).contentIntent.send();
                 } catch (PendingIntent.CanceledException e) {
                     Log.e(TAG, "", e);
