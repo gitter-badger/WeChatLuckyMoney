@@ -1,9 +1,15 @@
 package com.miui.hongbao;
 
+import android.view.accessibility.AccessibilityNodeInfo;
+
 /**
  * Created by biaji on 15-12-22.
  */
-public interface HongbaoState {
+public abstract class HongbaoState {
 
-    void performAction();
+    public abstract void performAction(AccessibilityNodeInfo node);
+
+    void parseNode(){
+
+    }
 }

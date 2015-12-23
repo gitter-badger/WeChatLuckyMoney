@@ -3,12 +3,13 @@ package com.miui.hongbao;
 import android.accessibilityservice.AccessibilityService;
 import android.annotation.TargetApi;
 import android.os.Build;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 /**
  * 已经完成的红包
  * Created by biaji on 15-12-22.
  */
-public class HongbaoPicked implements HongbaoState {
+public class HongbaoPicked extends HongbaoState {
 
     private HongbaoService context;
 
@@ -19,7 +20,7 @@ public class HongbaoPicked implements HongbaoState {
 
     @Override
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public void performAction() {
+    public void performAction(AccessibilityNodeInfo node) {
 
         if (context == null) {
             return;

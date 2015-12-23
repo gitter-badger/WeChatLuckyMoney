@@ -6,14 +6,14 @@ import android.view.accessibility.AccessibilityNodeInfo;
  * 未打开的红包
  * Created by biaji on 15-12-22.
  */
-public class HongbaoUnopened implements HongbaoState {
+public class HongbaoUnopened extends HongbaoState {
 
     private HongbaoService context;
 
     private AccessibilityNodeInfo node;
 
     @Override
-    public void performAction() {
+    public void performAction(AccessibilityNodeInfo node) {
         if (node == null) {
             return;
         }

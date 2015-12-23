@@ -50,17 +50,17 @@ public class HongbaoService extends AccessibilityService {
      */
     private String currentNodeInfo;
 
-    private final static String WECHAT_DETAILS_EN = "Details";
-    private final static String WECHAT_DETAILS_CH = "红包详情";
-    private final static String WECHAT_BETTER_LUCK_EN = "Better luck next time!";
-    private final static String WECHAT_BETTER_LUCK_CH = "手慢了";
-    private final static String WECHAT_OPEN_EN = "Open";
-    private final static String WECHAT_OPENED_EN = "opened";
-    private final static String WECHAT_OPEN_CH = "拆红包";
-    private final static String WECHAT_VIEW_SELF_CH = "查看红包";
-    private final static String WECHAT_VIEW_OTHERS_CH = "领取红包";
-    private final static String NOTIFICATION_TIP = "[微信红包]";
-    private final static String NOTIFICATION_QQ = "[QQ红包]";
+    public final static String WECHAT_DETAILS_EN = "Details";
+    public final static String WECHAT_DETAILS_CH = "红包详情";
+    public final static String WECHAT_BETTER_LUCK_EN = "Better luck next time!";
+    public final static String WECHAT_BETTER_LUCK_CH = "手慢了";
+    public final static String WECHAT_OPEN_EN = "Open";
+    public final static String WECHAT_OPENED_EN = "opened";
+    public final static String WECHAT_OPEN_CH = "拆红包";
+    public final static String WECHAT_VIEW_SELF_CH = "查看红包";
+    public final static String WECHAT_VIEW_OTHERS_CH = "领取红包";
+    public final static String NOTIFICATION_TIP = "[微信红包]";
+    public final static String NOTIFICATION_QQ = "[QQ红包]";
 
     /**
      * 用来鉴别对象是否为微信红包的字符串
