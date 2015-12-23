@@ -18,7 +18,7 @@ public class HongbaoUnopened extends HongbaoState {
     }
 
     @Override
-    public void performAction(AccessibilityNodeInfo node) {
+    public void performAction() {
         if (this.node == null) {
             return;
         }

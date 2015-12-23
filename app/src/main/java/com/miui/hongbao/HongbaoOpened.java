@@ -18,11 +18,11 @@ public class HongbaoOpened extends HongbaoState {
     }
 
     @Override
-    public void performAction(AccessibilityNodeInfo node) {
+    public void performAction() {
         if (this.node == null) {
             return;
         }
 
-        this.node.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        this.node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
     }
 }

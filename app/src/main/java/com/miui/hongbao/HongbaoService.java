@@ -58,7 +58,6 @@ public class HongbaoService extends AccessibilityService {
      *
      * @param event 事件
      */
-    @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
 
@@ -91,7 +90,7 @@ public class HongbaoService extends AccessibilityService {
             return;
         }
 
-        this.hongbao.performAction(rootNodeInfo);
+        this.hongbao.performAction();
     }
 
     @Override

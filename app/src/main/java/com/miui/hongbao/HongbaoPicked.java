@@ -20,7 +20,7 @@ public class HongbaoPicked extends HongbaoState {
 
     @Override
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    public void performAction(AccessibilityNodeInfo node) {
+    public void performAction() {
 
         if (context == null) {
             return;
