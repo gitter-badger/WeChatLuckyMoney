@@ -12,12 +12,17 @@ public class HongbaoUnopened extends HongbaoState {
 
     private AccessibilityNodeInfo node;
 
+    public HongbaoUnopened(HongbaoService context, AccessibilityNodeInfo node) {
+        this.context = context;
+        this.node = node;
+    }
+
     @Override
     public void performAction(AccessibilityNodeInfo node) {
-        if (node == null) {
+        if (this.node == null) {
             return;
         }
 
-        node.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+        this.node.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
     }
 }

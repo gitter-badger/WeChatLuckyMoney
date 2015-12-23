@@ -8,8 +8,21 @@ import android.view.accessibility.AccessibilityNodeInfo;
  */
 public class HongbaoOpened extends HongbaoState {
 
+    private HongbaoService context;
+
+    private AccessibilityNodeInfo node;
+
+    public HongbaoOpened(HongbaoService context, AccessibilityNodeInfo node) {
+        this.context = context;
+        this.node = node;
+    }
+
     @Override
     public void performAction(AccessibilityNodeInfo node) {
+        if (this.node == null) {
+            return;
+        }
 
+        this.node.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
     }
 }

@@ -17,32 +17,11 @@ import java.util.List;
 public class HongbaoService extends AccessibilityService {
 
     private final static String TAG = "GOTCHA";
-    /**
-     * 解析的红包列表
-     */
-    private List<AccessibilityNodeInfo> mReceiveNodes = new ArrayList<>();
-    /**
-     * 未打开的红包列表
-     */
-    private List<AccessibilityNodeInfo> mUnpackNode = new ArrayList<>();
+
     /**
      * 已抢过的红包
      */
     private List<String> finishedNode = new ArrayList<>();
-    /**
-     * 红包是否已经戳开
-     */
-    private boolean mLuckyMoneyPicked;
-    /**
-     * 解析结果中有红包节点
-     */
-    private boolean mLuckyMoneyReceived;
-
-    private boolean mNeedUnpack;
-    /**
-     * 是否处于打开红包阶段，因此需要进行返回操作
-     */
-    private boolean mNeedBack;
 
     private AccessibilityNodeInfo rootNodeInfo;
     /**
@@ -69,10 +48,9 @@ public class HongbaoService extends AccessibilityService {
 
     private HongbaoState hongbao;
 
-    public void setHongbao(HongbaoState hongbao){
+    public void setHongbao(HongbaoState hongbao) {
         this.hongbao = hongbao;
     }
-
 
 
     /**
@@ -107,42 +85,13 @@ public class HongbaoService extends AccessibilityService {
 
         if (rootNodeInfo == null) return;
 
-        checkNodeInfo();
+        this.hongbao = checkNodeInfo();
 
-
-        if (mNeedBack) {
-            performGlobalAction(GLOBAL_ACTION_BACK);
-            mLuckyMoneyPicked = false;
-            mNeedBack = false;
+        if (this.hongbao == null) {
+            return;
         }
 
-        /* 如果已经接收到红包并且还没有戳开 */
-        if (mLuckyMoneyReceived && !mLuckyMoneyPicked && (mReceiveNodes.size() > 0)) {
-            int size = mReceiveNodes.size();
-            if (size > 0) {
-                AccessibilityNodeInfo cellNode = mReceiveNodes.get(size - 1);
-
-                if (cellNode != null && cellNode.getParent() != null) {
-                    cellNode.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                    currentNodeInfo = getSignature(cellNode);
-                }
-
-                mReceiveNodes.remove(cellNode);
-
-                mLuckyMoneyReceived = false;
-                mLuckyMoneyPicked = true;
-            }
-        }
-
-        /* 如果戳开但还未领取 */
-        if (mNeedUnpack && !mUnpackNode.isEmpty()) {
-            AccessibilityNodeInfo cellNode = mUnpackNode.get(0);
-            cellNode.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-            mUnpackNode.remove(0);
-            finishedNode.add(currentNodeInfo);
-            mNeedUnpack = false;
-        }
-
+        this.hongbao.performAction(rootNodeInfo);
     }
 
     @Override
@@ -152,10 +101,12 @@ public class HongbaoService extends AccessibilityService {
 
     /**
      * 检查节点信息
+     *
+     * @return 返回当前屏幕决定的红包状态
      */
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-    private void checkNodeInfo() {
-        if (this.rootNodeInfo == null) return;
+    private HongbaoState checkNodeInfo() {
+        if (this.rootNodeInfo == null) return null;
 
         /* 聊天会话窗口，遍历节点匹配“领取红包”和"查看红包" */
         List<AccessibilityNodeInfo> nodesWaiting = findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
@@ -165,53 +116,43 @@ public class HongbaoService extends AccessibilityService {
 
             Log.v(TAG, "Got " + nodesWaiting.size() + " nodes");
 
-            for (AccessibilityNodeInfo info : nodesWaiting) {
+            for (AccessibilityNodeInfo node : nodesWaiting) {
 
-                if (!isHongbaoObj(info)) {
+                if (!isHongbaoObj(node)) {
                     Log.d(TAG, "Not Real Node, bypass");
                     continue;
                 }
 
-                if (finishedNode.contains(getSignature(info))) {
+                if (finishedNode.contains(getSignature(node))) {
                     Log.d(TAG, "Already opened, bypass");
                     continue;
                 }
+                currentNodeInfo = getSignature(node);
+                return new HongbaoUnopened(this, node);
 
-                if (mReceiveNodes.contains(info)) {
-                    Log.d(TAG, "Already Added, bypass");
-                    mLuckyMoneyReceived = true;
-                    mLuckyMoneyPicked = false;
-                    continue;
-                }
-
-                mLuckyMoneyReceived = true;
-                Log.v(TAG, "Add " + info.getText() + " to mReceiveNodes");
-                mReceiveNodes.add(info);
             }
-
-            return;
         }
 
         /* 戳开红包，红包还没抢完，遍历节点匹配“拆红包” */
         List<AccessibilityNodeInfo> unpackedNode = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
                 this.WECHAT_OPEN_CH, this.WECHAT_OPEN_EN});
         if (!unpackedNode.isEmpty()) {
-            mUnpackNode.addAll(unpackedNode);
-            mNeedUnpack = true;
-            return;
+            return new HongbaoOpened(this, unpackedNode.get(0));
         }
 
         /* 戳开红包，红包已被抢完，遍历节点匹配“红包详情”和“手慢了” */
-        if (mLuckyMoneyPicked) {
-            List<AccessibilityNodeInfo> nodes3 = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
-                    this.WECHAT_BETTER_LUCK_CH, this.WECHAT_DETAILS_CH,
-                    this.WECHAT_BETTER_LUCK_EN, this.WECHAT_DETAILS_EN});
-            if (!nodes3.isEmpty()) {
-                mNeedBack = true;
-                mLuckyMoneyPicked = false;
-                finishedNode.add(currentNodeInfo);
-            }
+
+        List<AccessibilityNodeInfo> nodes3 = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
+                this.WECHAT_BETTER_LUCK_CH, this.WECHAT_DETAILS_CH,
+                this.WECHAT_BETTER_LUCK_EN, this.WECHAT_DETAILS_EN});
+        if (!nodes3.isEmpty()) {
+
+            finishedNode.add(currentNodeInfo);
+            return new HongbaoPicked(this);
         }
+
+
+        return null;
     }
 
     /**
