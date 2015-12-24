@@ -197,9 +197,15 @@ public class HongbaoService extends AccessibilityService {
         List<AccessibilityNodeInfo> nodes3 = this.findAccessibilityNodeInfosByTexts(this.rootNodeInfo, new String[]{
                 this.WECHAT_BETTER_LUCK_CH, this.WECHAT_DETAILS_CH,
                 this.WECHAT_BETTER_LUCK_EN, this.WECHAT_DETAILS_EN});
-        if (!nodes3.isEmpty()) {
 
-            finishedNode.add(currentNodeInfo);
+        if (!this.rootNodeInfo.getClassName().equals("android.widget.FrameLayout") || nodes3.size() > 1 ) { //聊天中出现的字符串不应该做为返回指示
+            return null;
+        }
+
+        if (!nodes3.isEmpty()) {
+            if (!finishedNode.contains(currentNodeInfo)) {
+                finishedNode.add(currentNodeInfo);
+            }
             return new HongbaoPicked(this);
         }
 
